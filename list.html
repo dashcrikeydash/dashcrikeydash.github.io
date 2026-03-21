@@ -98,22 +98,24 @@ setTimeout(() => {
   skipBtn.style.display = 'block';
 }, 15000);
 
-// Skip loading
+// Skip loading manually
 skipBtn.onclick = () => {
   loadingScreen.style.display = 'none';
 };
 
-// Update progress text
+// Update progress
 function updateProgress() {
   progressText.textContent = `Loaded: ${loadedCount} / ${imagesList.length}`;
+
+  // ✅ Only hide when ALL images are loaded
+  if (loadedCount >= imagesList.length && imagesList.length > 0) {
+    loadingScreen.style.display = 'none';
+  }
 }
 
 // Load images in batches
 function loadBatch() {
-  if (index >= imagesList.length) {
-    loadingScreen.style.display = 'none';
-    return;
-  }
+  if (index >= imagesList.length) return;
 
   const batch = imagesList.slice(index, index + BATCH_SIZE);
 
@@ -130,7 +132,13 @@ function loadBatch() {
     img.src = path;
     img.loading = "lazy";
 
+    // ✅ Count BOTH success and failure
     img.onload = () => {
+      loadedCount++;
+      updateProgress();
+    };
+
+    img.onerror = () => {
       loadedCount++;
       updateProgress();
     };
@@ -150,7 +158,7 @@ fetch(jsonURL)
   .then(res => res.json())
   .then(images => {
     imagesList = images;
-    updateProgress(); // set initial total
+    updateProgress(); // set total count
     loadBatch();
   })
   .catch(err => {
