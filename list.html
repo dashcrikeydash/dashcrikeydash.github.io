@@ -74,6 +74,7 @@ body {
 <!-- Loading screen -->
 <div id="loading">
   <h2>Loading images...</h2>
+  <p id="progress">Loaded: 0 / 0</p>
   <button id="skipBtn">Skip loading</button>
 </div>
 
@@ -81,14 +82,16 @@ body {
 
 <script>
 const jsonURL = 'images.json';
-const BATCH_SIZE = 20; // how many images load at once
+const BATCH_SIZE = 20;
+
 let index = 0;
 let imagesList = [];
-let loadingDone = false;
+let loadedCount = 0;
 
 const grid = document.getElementById('grid');
 const loadingScreen = document.getElementById('loading');
 const skipBtn = document.getElementById('skipBtn');
+const progressText = document.getElementById('progress');
 
 // Show skip button after 15 seconds
 setTimeout(() => {
@@ -100,10 +103,14 @@ skipBtn.onclick = () => {
   loadingScreen.style.display = 'none';
 };
 
+// Update progress text
+function updateProgress() {
+  progressText.textContent = `Loaded: ${loadedCount} / ${imagesList.length}`;
+}
+
 // Load images in batches
 function loadBatch() {
   if (index >= imagesList.length) {
-    loadingDone = true;
     loadingScreen.style.display = 'none';
     return;
   }
@@ -116,12 +123,17 @@ function loadBatch() {
 
     const button = document.createElement('button');
     button.onclick = () => {
-      window.open(path, '_blank'); // open full image
+      window.open(path, '_blank');
     };
 
     const img = document.createElement('img');
     img.src = path;
     img.loading = "lazy";
+
+    img.onload = () => {
+      loadedCount++;
+      updateProgress();
+    };
 
     button.appendChild(img);
     container.appendChild(button);
@@ -130,7 +142,6 @@ function loadBatch() {
 
   index += BATCH_SIZE;
 
-  // Load next batch smoothly
   setTimeout(loadBatch, 50);
 }
 
@@ -139,6 +150,7 @@ fetch(jsonURL)
   .then(res => res.json())
   .then(images => {
     imagesList = images;
+    updateProgress(); // set initial total
     loadBatch();
   })
   .catch(err => {
