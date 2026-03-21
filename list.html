@@ -6,17 +6,57 @@
 <title>Oliver API | List</title>
 
 <style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
+}
+
+/* Loading screen */
+#loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 999;
+}
+
+#skipBtn {
+  margin-top: 20px;
+  padding: 10px 15px;
+  background: #333;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  display: none;
+}
+
+/* Grid */
 #grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
+  padding: 10px;
 }
 
 .img-container {
   background: #222;
   padding: 5px;
   border-radius: 8px;
-  overflow: hidden;
+}
+
+.img-container button {
+  all: unset;
+  cursor: pointer;
+  display: block;
 }
 
 .img-container img {
@@ -31,31 +71,79 @@
 
 <body>
 
+<!-- Loading screen -->
+<div id="loading">
+  <h2>Loading images...</h2>
+  <button id="skipBtn">Skip loading</button>
+</div>
+
 <div id="grid"></div>
 
 <script>
 const jsonURL = 'images.json';
+const BATCH_SIZE = 20; // how many images load at once
+let index = 0;
+let imagesList = [];
+let loadingDone = false;
 
+const grid = document.getElementById('grid');
+const loadingScreen = document.getElementById('loading');
+const skipBtn = document.getElementById('skipBtn');
+
+// Show skip button after 15 seconds
+setTimeout(() => {
+  skipBtn.style.display = 'block';
+}, 15000);
+
+// Skip loading
+skipBtn.onclick = () => {
+  loadingScreen.style.display = 'none';
+};
+
+// Load images in batches
+function loadBatch() {
+  if (index >= imagesList.length) {
+    loadingDone = true;
+    loadingScreen.style.display = 'none';
+    return;
+  }
+
+  const batch = imagesList.slice(index, index + BATCH_SIZE);
+
+  batch.forEach(path => {
+    const container = document.createElement('div');
+    container.className = 'img-container';
+
+    const button = document.createElement('button');
+    button.onclick = () => {
+      window.open(path, '_blank'); // open full image
+    };
+
+    const img = document.createElement('img');
+    img.src = path;
+    img.loading = "lazy";
+
+    button.appendChild(img);
+    container.appendChild(button);
+    grid.appendChild(container);
+  });
+
+  index += BATCH_SIZE;
+
+  // Load next batch smoothly
+  setTimeout(loadBatch, 50);
+}
+
+// Fetch JSON
 fetch(jsonURL)
   .then(res => res.json())
   .then(images => {
-    const grid = document.getElementById('grid');
-
-    images.forEach(path => {
-      const container = document.createElement('div');
-      container.className = 'img-container';
-
-      const img = document.createElement('img');
-      img.src = path;
-      img.loading = "lazy";
-
-      container.appendChild(img);
-      grid.appendChild(container);
-    });
+    imagesList = images;
+    loadBatch();
   })
   .catch(err => {
     console.error(err);
-    document.body.innerHTML += '<p style="color:red;">Failed to load images.</p>';
+    loadingScreen.innerHTML = '<p style="color:red;">Failed to load images.</p>';
   });
 </script>
 
