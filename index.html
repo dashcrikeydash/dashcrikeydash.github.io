@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oliver API</title>
+</head>
+<body>
+<h1>Oliver API</h1>
+<p>Visit normally to see a random image, or add <code>?api</code> to the URL to get redirected to a random image directly.</p>
+<img id="catImage" alt="Random Cat" style="max-width: 100%; height: auto; display:block; margin-top: 20px;">
+
+<script>
+// Path to your JSON file
+const jsonURL = 'images.json'; // your JSON file with image paths
+
+fetch(jsonURL)
+  .then(response => response.json())
+  .then(images => {
+    // Pick a random image from the list
+    const randomImage = images[Math.floor(Math.random() * images.length)];
+
+    // Display in browser
+    const img = document.getElementById('catImage');
+    img.src = randomImage;
+
+    // API mode: redirect to image directly if URL has ?api
+    if (window.location.search.includes("api")) {
+      window.location.href = randomImage;
+    }
+  })
+  .catch(err => {
+    console.error('Failed to load images:', err);
+    document.body.innerHTML += '<p style="color:red;">Error loading images.</p>';
+  });
+</script>
+</body>
+</html>
